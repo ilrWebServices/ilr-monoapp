@@ -1,0 +1,5 @@
+"https://neutrals.{default}/":
+  type: upstream
+  upstream: "neutrals:http"
+  cache:
+    enabled: false
