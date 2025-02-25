@@ -2,3 +2,6 @@
 	path = scheinman-neutrals-web
 	url = https://github.com/ilrWebServices/scheinman-neutrals-web.git
 	branch = .
+[submodule "mitr"]
+	path = mitr
+	url = git@github.com:ilrWebServices/mitr.git

@@ -106,3 +106,143 @@
       # Run drush cron every hour
       spec: '0 * * * *'
       cmd: 'drush core-cron'
+- name: 'mitr'
+  type: 'php:8.3'
+  source:
+    root: scheinman-neutrals-web
+  dependencies:
+    php:
+      composer/composer: '^2.1'
+  runtime:
+    extensions:
+      - apcu
+      - ldap
+      - xsl
+  disk: 1024
+  mounts:
+    '/tmp':
+      source: local
+      source_path: 'tmp'
+    '/private':
+      source: local
+      source_path: 'private'
+    '/.drush':
+      source: local
+      source_path: 'drush'
+    '/drush-backups':
+      source: local
+      source_path: 'drush-backups'
+    '/data':
+      source: local
+      source_path: 'data'
+  build:
+    flavor: none
+  hooks:
+    build: |
+      set -e
+
+      # Run compose install for the main Drupal app.
+      composer --no-dev --no-ansi --no-interaction install --no-progress --prefer-dist --optimize-autoloader
+
+      #
+      cd scripts/ilr-profiles-data-pull/
+      composer --no-dev --no-ansi --no-interaction install --no-progress --prefer-dist --optimize-autoloader
+    deploy: |
+      set -e
+      php ./drush/platformsh_generate_drush_yml.php
+      cd web
+      drush -l emhrm deploy
+
+  # The configuration of app when it is exposed to the web.
+  web:
+    locations:
+      # All requests not otherwise specified follow these rules.
+      '/':
+        # The folder from which to serve static assets, for this location.
+        #
+        # This is a filesystem path, relative to the application root.
+        root: 'web'
+
+        # How long to allow static assets from this location to be cached.
+        #
+        # Can be a time in seconds, or -1 for no caching. Times can be
+        # suffixed with "s" (seconds), "m" (minutes), "h" (hours), "d"
+        # (days), "w" (weeks), "M" (months, as 30 days) or "y" (years, as
+        # 365 days).
+        expires: 5m
+
+        # Redirect any incoming request to Drupal's front controller.
+        passthru: '/index.php'
+
+        # Deny access to all static files, except those specifically allowed below.
+        allow: false
+
+        # Rules for specific URI patterns.
+        rules:
+          # Allow access to common static files.
+          '\.(jpe?g|png|gif|svgz?|css|js|map|ico|bmp|eot|woff2?|otf|ttf)$':
+            allow: true
+          '^/robots\.txt$':
+            allow: true
+          '^/sitemap\.xml$':
+            allow: true
+
+          # Deny direct access to configuration files.
+          '^/sites/sites\.php$':
+            scripts: false
+          '^/sites/[^/]+/settings.*?\.php$':
+            scripts: false
+
+      # The files directory has its own special configuration rules.
+      '/files':
+        # Allow access to all files in the public files directory.
+        allow: true
+        expires: 5m
+        passthru: '/index.php'
+        root: 'data/files'
+
+        # Do not execute PHP scripts from the writeable mount.
+        scripts: false
+
+        rules:
+          # Provide a longer TTL (2 weeks) for aggregated CSS and JS files.
+          '^/files/(css|js)':
+            expires: 2w
+
+  # Set the timezone for cron jobs.
+  timezone: "America/New_York"
+
+  variables:
+    env:
+      # This is used by the ilr-profiles-data-feed cron and scripts.
+      OUTPUT_DIR: "/app/data/files/default"
+
+  crons:
+    # Run Drupal's cron tasks every 30 minutes.
+    drupal:
+      spec: '*/30 * * * *'
+      cmd: 'drush -l emhrm core-cron'
+    collegenet-import:
+      # Run EMHRM CollegeNET importer every day at 7:05 and 12:05.
+      spec: '5 7,12 * * *'
+      cmd: |
+        if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
+          drush -l emhrm collegenet2sf:run
+        fi
+    ilr-profiles-data-feed:
+      # Run activity insight/ldap profile importer every morning at 8:35.
+      spec: '35 8 * * *'
+      cmd: |
+        if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
+          cd scripts/ilr-profiles-data-pull/
+          php ./pull_people_data.php
+        fi
+    employee-feed:
+      # Run workday-based employee feed generator every 6 hours.
+      spec: '0 */6 * * *'
+      cmd: |
+        set -e
+        if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
+          cd scripts/ilr-profiles-data-pull/
+          php ./build_people_feed.php
+        fi
