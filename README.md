@@ -37,6 +37,14 @@ This file is essentially a collection of `.platform.app.yaml` files in any array
 > [!NOTE]
 > Choose the short name carefully, because it's hard to change later. Don't make a mistake like we made by calling an app `drupal8`, which makes a lot less sense by the time you've upgraded to Drupal 10.
 
+> [!NOTE]
+> Be sure to add the `source` setting to the application, e.g.:
+> ```
+> source:
+>   root: scheinman-neutrals-web
+> ```
+> This the value of `root` should match the git submodule directory name.
+
 ### Required platform.sh files
 
 Platform.sh documentation recommends that some files, like `.environment` and scripts, be placed in the root directory of an application. For the applications are running in this multi-app, we try to avoid hosting-specific configuration in their respective repos.
