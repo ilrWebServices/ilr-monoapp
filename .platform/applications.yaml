@@ -116,6 +116,7 @@ employee-data:
   runtime:
     extensions:
       - apcu
+      - ldap
   variables:
     env:
       # This is used by the cron entries and scripts.
