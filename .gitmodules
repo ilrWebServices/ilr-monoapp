@@ -2,3 +2,7 @@
 	path = scheinman-neutrals-web
 	url = https://github.com/ilrWebServices/scheinman-neutrals-web.git
 	branch = .
+[submodule "employee-data"]
+	path = employee-data
+	url = https://github.com/ilrWebServices/employee-data.git
+	branch = .

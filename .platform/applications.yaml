@@ -1,4 +1,4 @@
-- name: 'neutrals'
+neutrals:
   type: 'php:8.4'
   source:
     root: scheinman-neutrals-web
@@ -106,3 +106,58 @@
       # Run drush cron every hour
       spec: '0 * * * *'
       cmd: 'drush core-cron'
+employee-data:
+  type: 'php:8.4'
+  source:
+    root: employee-data
+  dependencies:
+    php:
+      composer/composer: '^2.1'
+  runtime:
+    extensions:
+      - apcu
+  variables:
+    env:
+      # This is used by the cron entries and scripts.
+      OUTPUT_DIR: "/app/web/data"
+  disk: 1024
+  timezone: "America/New_York"
+  mounts:
+    '/web/data':
+      source: local
+      source_path: 'data'
+    '/tmp':
+      source: tmp
+  web:
+    locations:
+      '/':
+        root: 'web'
+        expires: 1d
+        passthru: '/index.php'
+        allow: false
+      '/data':
+        root: 'web/data'
+        expires: 5m
+        passthru: '/index.php'
+        allow: true
+        scripts: false
+        index:
+          - "employee-feed.csv"
+          - "employee-position-feed.csv"
+  build:
+    flavor: none
+  hooks:
+    build: |
+      set -e
+      echo "IyBodHRwczovL2RvY3MucGxhdGZvcm0uc2gvZ3VpZGVzL2RydXBhbC9kZXBsb3kvY3VzdG9taXplLmh0bWwjZW52aXJvbm1lbnQKaWYgWyAtbiAiJFBMQVRGT1JNX0FQUF9ESVIiIC1hIC1mICIkUExBVEZPUk1fQVBQX0RJUiIvY29tcG9zZXIuanNvbiBdIDsgdGhlbgogIGJpbj0kKGNvbXBvc2VyIGNvbmZpZyBiaW4tZGlyIC0td29ya2luZy1kaXI9IiRQTEFURk9STV9BUFBfRElSIiAtLW5vLWludGVyYWN0aW9uIDI+L2Rldi9udWxsKQogIGV4cG9ydCBQQVRIPSIke1BMQVRGT1JNX0FQUF9ESVJ9LyR7YmluOi12ZW5kb3IvYmlufToke1BBVEh9IgpmaQ==" | base64 -d - > .environment
+      composer --no-dev --no-ansi --no-interaction install --no-progress --prefer-dist --optimize-autoloader
+  crons:
+    # Run workday-based employee feed generator every 6 hours.
+    employee-feed:
+      spec: '0 */6 * * *'
+      cmd: |
+        set -e
+        if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
+          cd employee-data/
+          php ./build_people_feed.php
+        fi

@@ -3,3 +3,8 @@
   upstream: "neutrals:http"
   cache:
     enabled: false
+"https://employee-data.{default}/":
+  type: upstream
+  upstream: "employee-data:http"
+  cache:
+    enabled: false
