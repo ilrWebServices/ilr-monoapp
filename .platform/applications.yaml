@@ -159,6 +159,6 @@ employee-data:
       cmd: |
         set -e
         if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
-          cd employee-data/
+          # We should be in /app already.
           php ./build_people_feed.php
         fi
