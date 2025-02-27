@@ -139,12 +139,8 @@ employee-data:
       '/data':
         root: 'web/data'
         expires: 5m
-        passthru: '/index.php'
         allow: true
         scripts: false
-        index:
-          - "employee-feed.csv"
-          - "employee-position-feed.csv"
   build:
     flavor: none
   hooks:
@@ -159,6 +155,6 @@ employee-data:
       cmd: |
         set -e
         if [ "$PLATFORM_ENVIRONMENT_TYPE" = production ]; then
-          cd employee-data/
+          # We should be in /app already.
           php ./build_people_feed.php
         fi
