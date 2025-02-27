@@ -139,12 +139,8 @@ employee-data:
       '/data':
         root: 'web/data'
         expires: 5m
-        passthru: '/index.php'
         allow: true
         scripts: false
-        index:
-          - "employee-feed.csv"
-          - "employee-position-feed.csv"
   build:
     flavor: none
   hooks:
