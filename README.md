@@ -26,7 +26,14 @@ New applications are added using several steps:
 
 ## 1. Add the application as a git submodule
 
-E.g. `git submodule add git@github.com:ilrWebServices/scheinman-neutrals-web.git`
+E.g. 
+
+```
+git submodule add git@github.com:ilrWebServices/scheinman-neutrals-web.git scheinman-neutrals-web
+git submodule set-branch --branch . scheinman-neutrals-web
+```
+
+See https://git-scm.com/docs/git-submodule#Documentation/git-submodule.txt---branchltbranchgt for more info about `--branch .`.
 
 ## 2. Add the application to the platform.sh config file
 
